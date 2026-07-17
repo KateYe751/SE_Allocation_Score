@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SE Allocation Score Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .page-sub {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 28px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1120px;
+      margin: 0 auto 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.09);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f0f2f5;
+    }
+
+    .card-title { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+
+    .score-pill {
+      font-size: 18px;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 20px;
+      min-width: 60px;
+      text-align: center;
+      background: #f0f2f5;
+      color: #555;
+      transition: background 0.3s, color 0.3s;
+    }
+    .score-pill.green  { background: #e8f5e9; color: #2e7d32; }
+    .score-pill.amber  { background: #fff8e1; color: #e65100; }
+    .score-pill.red    { background: #fce4ec; color: #c62828; }
+
+    .field { margin-bottom: 13px; }
+
+    .field-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 5px;
+    }
+
+    select {
+      width: 100%;
+      padding: 7px 32px 7px 10px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #1a1a2e;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888' d='M5 7L0 2h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    select:focus { outline: none; border-color: #1565c0; }
+
+    /* SE result card */
+    .se-result {
+      max-width: 1120px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #1565c0 0%, #1976d2 60%, #42a5f5 100%);
+      border-radius: 14px;
+      padding: 32px 28px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .se-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      opacity: 0.65;
+      margin-bottom: 4px;
+    }
+
+    .se-number {
+      font-size: 80px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 4px 0 10px;
+    }
+
+    .se-tier {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 5px 18px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .t-low      { background: rgba(76,175,80,.22);    color: #a5d6a7; }
+    .t-medium   { background: rgba(255,193,7,.22);    color: #ffe082; }
+    .t-high     { background: rgba(244,67,54,.22);    color: #ef9a9a; }
+    .t-critical { background: rgba(156,39,176,.22);   color: #ce93d8; }
+    .t-pending  { background: rgba(255,255,255,.12);  color: rgba(255,255,255,.5); }
+
+    .breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .br-item {
+      background: rgba(255,255,255,.10);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+
+    .br-name  { font-size: 11px; opacity: .6; margin-bottom: 4px; }
+    .br-sub   { font-size: 10px; opacity: .4; margin-bottom: 4px; }
+    .br-val   { font-size: 20px; font-weight: 800; }
+    .br-wt    { font-size: 10px; opacity: .45; margin-top: 2px; }
+
+    @media (max-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .breakdown { grid-template-columns: 1fr 1fr; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<h1 class="page-title">SE Allocation Score Calculator</h1>
+<p class="page-sub">Complete Deal Value and Technical Complexity to generate the SE Allocation Score</p>
+
+<!-- Row 1: DV + TCE -->
+<div class="grid-2">
+
+  <!-- Deal Value Score -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Deal Value Score</span>
+      <span class="score-pill" id="dv-pill">—</span>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Monthly GP</div>
+      <select id="dv-gp" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="-30">&lt;$5k</option>
+        <option value="-10">$5k – $10k</option>
+        <option value="40">$10k – $30k</option>
+        <option value="80">$30k – $50k</option>
+        <option value="100">&gt;$50k</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Strategic Logo</div>
+      <select id="dv-logo" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Non-strategic</option>
+        <option value="40">Recognized brand</option>
+        <option value="70">Industry leader / strong logo</option>
+        <option value="90">Must-win / flagship / global</option>
+        <option value="100">CEO endorsement</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Expansion Potential</div>
+      <select id="dv-exp" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">On-time / no expansion</option>
+        <option value="50">Some upsell potential</option>
+        <option value="100">Multi-product / region expansion</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Revenue Certainty</div>
+      <select id="dv-rev" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Not signed / unclear</option>
+        <option value="60">Later-stage / likely</option>
+        <option value="100">Signed MSA / committed</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Time to Revenue</div>
+      <select id="dv-ttr" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="10">&gt;6 months / unclear</option>
+        <option value="40">3 – 6 months</option>
+        <option value="70">1 – 3 months</option>
+        <option value="100">&lt;1 month</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Technical Complexity Score -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Technical Complexity Score</span>
+      <span class="score-pill" id="tce-pill">—</span>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Product Scope</div>
+      <select id="tce-ps" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Single standard product, narrow scope</option>
+        <option value="40">One product with added features / two related products</option>
+        <option value="80">Multiple products or broader end-to-end scope</option>
+        <option value="100">Multi-product with significant cross-product coordination</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Transaction &amp; Onboarding Footprint</div>
+      <select id="tce-fp" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Simple domestic, limited currency/counterparty</option>
+        <option value="40">Some cross-border / multi-currency elements</option>
+        <option value="80">Broad cross-border, multiple currencies/markets</option>
+        <option value="100">Highly complex, multiple markets / platform-style onboarding</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Non-standard Product Work</div>
+      <select id="tce-ns" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Fully standard, no meaningful product gap</option>
+        <option value="50">Minor non-standard requirements / small product gaps</option>
+        <option value="80">Significant non-standard / notable gaps needing workarounds</option>
+        <option value="100">Major new product work / highly non-standard</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Dependency / Uncertainty</div>
+      <select id="tce-dep" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Clear scope, few dependencies, low uncertainty</option>
+        <option value="40">Some dependencies or moderate uncertainty</option>
+        <option value="80">Multiple dependencies, third parties, or evolving scope</option>
+        <option value="100">Heavy third-party reliance, major unknowns, fluid scope</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Integration Method</div>
+      <select id="tce-int" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Standard low-touch implementation</option>
+        <option value="40">Standard with some API-led work / technical guidance</option>
+        <option value="80">API-heavy or substantial technical solutioning</option>
+        <option value="100">Highly complex: custom solution design, repeated iterations</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">New Product Level</div>
+      <select id="tce-np" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Standard / well-established</option>
+        <option value="20">Minor variation</option>
+        <option value="80">Limited precedent</option>
+        <option value="100">New / no precedent</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Client Tech Capabilities</div>
+      <select id="tce-ct" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="0">Highly capable</option>
+        <option value="30">Moderately capable</option>
+        <option value="60">Limited capability</option>
+        <option value="100">Low / no capability</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Fund Flow / Account Structure Complexity</div>
+      <select id="tce-ff" onchange="recalc()">
+        <option value="">Select…</option>
+        <option value="10">Simple pay-in only</option>
+        <option value="30">Pay-in + basic payout / FX</option>
+        <option value="60">Wallet / stored value / multi-step flow</option>
+        <option value="80">Platform (connected accounts / split)</option>
+        <option value="100">Complex platform (nested / custom flow)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- SE Allocation Score Result -->
+<div class="se-result">
+  <div class="se-label">SE Allocation Score</div>
+  <div class="se-number" id="se-num">—</div>
+  <div class="se-tier t-pending" id="se-tier">Fill in all fields</div>
+
+  <div class="breakdown">
+    <div class="br-item">
+      <div class="br-name">Deal Value</div>
+      <div class="br-sub">50% weight</div>
+      <div class="br-val" id="br-dv">—</div>
+    </div>
+    <div class="br-item">
+      <div class="br-name">Technical Complexity</div>
+      <div class="br-sub">50% weight</div>
+      <div class="br-val" id="br-tce">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function v(id) {
+    const s = document.getElementById(id).value;
+    return s === '' ? null : parseFloat(s);
+  }
+
+  function pill(id, score) {
+    const el = document.getElementById(id);
+    if (score === null) { el.textContent = '—'; el.className = 'score-pill'; return; }
+    el.textContent = Math.round(score);
+    el.className = 'score-pill ' + (score < 40 ? 'green' : score < 70 ? 'amber' : 'red');
+  }
+
+  function calcDV() {
+    const gp = v('dv-gp'), logo = v('dv-logo'), exp = v('dv-exp'), rev = v('dv-rev'), ttr = v('dv-ttr');
+    if ([gp, logo, exp, rev, ttr].includes(null)) return null;
+    return gp * 0.45 + logo * 0.20 + exp * 0.10 + rev * 0.15 + ttr * 0.10;
+  }
+
+  function calcTCE() {
+    const ps  = v('tce-ps'),  fp  = v('tce-fp'),  ns  = v('tce-ns'),  dep = v('tce-dep'),
+          int = v('tce-int'), np  = v('tce-np'),  ct  = v('tce-ct'),  ff  = v('tce-ff');
+    if ([ps, fp, ns, dep, int, np, ct, ff].includes(null)) return null;
+    return ps * 0.20 + fp * 0.15 + ns * 0.20 + dep * 0.05 + int * 0.10 + np * 0.10 + ct * 0.10 + ff * 0.10;
+  }
+
+  function recalc() {
+    const dv  = calcDV();
+    const tce = calcTCE();
+
+    pill('dv-pill',  dv);
+    pill('tce-pill', tce);
+
+    document.getElementById('br-dv').textContent  = dv  !== null ? Math.round(dv)  : '—';
+    document.getElementById('br-tce').textContent = tce !== null ? Math.round(tce) : '—';
+
+    const numEl  = document.getElementById('se-num');
+    const tierEl = document.getElementById('se-tier');
+
+    if (dv === null || tce === null) {
+      numEl.textContent  = '—';
+      tierEl.textContent = 'Fill in all fields';
+      tierEl.className   = 'se-tier t-pending';
+      return;
+    }
+
+    const score = dv * 0.50 + tce * 0.50;
+    numEl.textContent = Math.round(score);
+
+    let label, cls;
+    if      (score < 30) { label = 'Low — Light Touch';         cls = 't-low'; }
+    else if (score < 55) { label = 'Medium — Standard SE';      cls = 't-medium'; }
+    else if (score < 75) { label = 'High — Dedicated SE';       cls = 't-high'; }
+    else                 { label = 'Critical — Senior SE / Team'; cls = 't-critical'; }
+
+    tierEl.textContent = label;
+    tierEl.className   = 'se-tier ' + cls;
+  }
+</script>
+
+</body>
+</html>
