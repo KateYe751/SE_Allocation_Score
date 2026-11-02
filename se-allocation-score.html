@@ -248,13 +248,13 @@
     },
     {
       id: 'ff', name: 'Fund Flow / Account Structure', weight: 0.15, platform: true,
-      measures: 'How money moves and who holds it. The first three options differ by the number of steps and whether funds are held in a balance.',
+      measures: 'Measures the complexity of the funds flow and account structure.',
       options: [
-        ['Pay-in only', 0, 'One step: collect and settle to the client\'s own account', 'Billing; PA online checkout'],
-        ['Pay-in + payout / FX', 30, 'Two steps: collect, then convert or pay out', 'PA + GTPN payout; GTPN collect + payout'],
-        ['Stored value / multi-step', 60, 'Funds held in a balance and used across several steps', 'Spend card funding; prefunded GTPN payouts'],
-        ['Platform', 80, 'Connected accounts with one account level; split payments or payouts to connected accounts; Airwallex as the standard platform model', 'Scale, standard setup'],
-        ['Complex platform', 100, 'Any of: nested or multi-level accounts; custom fund routing (funds held for or split across 3+ parties); reseller / subseller model; connected accounts using 2+ products', '']
+        ['Pay-in only', 0, 'Funds are collected and settled directly to the client\'s own account in a single step, with no intermediate balance held for later use.', 'Billing collection; PA online checkout settled to the client\'s own account'],
+        ['Pay-in + payout', 30, 'Funds are collected and then paid out in a separate step. No FX conversion or intermediate stored balance.', 'PA collection → GTPN payout; GTPN collection → payout'],
+        ['Pay-in + hold/use + payout', 60, 'Funds are collected and held in a balance before payout. While held, they may be converted, allocated, or used for another transaction.', 'PA collection → hold balance → FX conversion → GTPN payout; PA collection → hold balance → split/allocate → multiple GTPN payouts'],
+        ['Platform', 80, 'A single-level connected-account structure, with payments or payouts routed or split to connected accounts.', 'Scale standard setup; PA payments split across connected accounts'],
+        ['Complex platform', 100, 'Any of the following: nested or multi-level accounts; custom fund routing or splitting across 3+ parties; a reseller/sub-seller model; or connected-account flows spanning 2+ product families.', 'Nested platform; custom split across 3+ parties; reseller/sub-seller; connected-account flow spanning PA + GTPN']
       ]
     }
   ];
